@@ -3,8 +3,7 @@
  * @param {String} str
  * @param {Boolean} full
  */
-
-function getTextLength(str, full) {
+export const getTextLength = function(str, full) {
   let len = 0;
   for (let i = 0; i < str.length; i++) {
     let c = str.charCodeAt(i);
@@ -16,13 +15,13 @@ function getTextLength(str, full) {
     }
   }
   return len;
-}
+};
 
 /**
  * rgba(255, 255, 255, 1) => #ffffff
  * @param {String} color
  */
-function transferColor(color = '') {
+export const transferColor = function(color = '') {
   let res = '#';
   color = color.replace(/^rgba?\(/, '').replace(/\)$/, '');
   color = color.split(', ');
@@ -38,9 +37,9 @@ function transferColor(color = '') {
   }
 
   return res;
-}
+};
 
-function transferBorder(border = '') {
+export const transferBorder = function(border = '') {
   let res = border.match(/(\w+)px\s(\w+)\s(.*)/);
   let obj = {};
 
@@ -53,26 +52,27 @@ function transferBorder(border = '') {
   }
 
   return res ? obj : null;
-}
+};
 
 /**
  * 内边距，依次为上右下左
  * @param {*} padding
  */
-function transferPadding(padding = '0 0 0 0') {
+export const transferPadding = function(padding = '0 0 0 0') {
   padding = padding.split(' ');
   for (let i = 0, len = padding.length; i < len; i++) {
     padding[i] = +padding[i].replace('px', '');
   }
 
   return padding;
-}
+};
+
 /**
  * type1: 0, 25, 17, rgba(0, 0, 0, 0.3)
  * type2: rgba(0, 0, 0, 0.3) 0px 25px 17px 0px => (0, 25, 17, rgba(0, 0, 0, 0.3))
  * @param {*} shadow
  */
-function transferBoxShadow(shadow = '', type) {
+export const transferBoxShadow = function(shadow = '', type) {
   if (!shadow || shadow === 'none') return;
   let color;
   let split;
@@ -95,11 +95,9 @@ function transferBoxShadow(shadow = '', type) {
     blur: +shadow[2] || 0,
     color,
   };
-}
+};
 
-function getUid(prefix) {
-  prefix = prefix || '';
-
+export const getUid = function(prefix = '') {
   return (
     prefix +
     'xxyxxyxx'.replace(/[xy]/g, c => {
@@ -108,13 +106,6 @@ function getUid(prefix) {
       return v.toString(16);
     })
   );
-}
-
-export default {
-  getTextLength,
-  transferBorder,
-  transferColor,
-  transferPadding,
-  transferBoxShadow,
-  getUid,
 };
+
+export const noop = function(_: any) {};

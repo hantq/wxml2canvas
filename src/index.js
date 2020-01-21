@@ -1,24 +1,11 @@
-import Util from './util';
+import Taro from '@tarojs/taro';
 
-const imageMode = [
-  'scaleToFill',
-  'aspectFit',
-  'aspectFill',
-  'widthFix',
-  'top',
-  'bottom',
-  'center',
-  'left',
-  'right',
-  'top left',
-  'top right',
-  'bottom left',
-  'bottom right',
-];
+import { IMAGE_MODE } from './constants';
+import { getUid, noop, transferBorder, transferBoxShadow, transferPadding } from './utils';
 
-class Wxml2Canvas {
+export default class Taro2Canvas {
   constructor(options = {}) {
-    this.device = (wx.getSystemInfoSync && wx.getSystemInfoSync()) || {};
+    this.device = Taro.getSystemInfoSync() || {};
     this.zoom = options.zoom || this.device.windowWidth / 375;
 
     this.element = options.element;
@@ -32,9 +19,9 @@ class Wxml2Canvas {
     this.translateY = options.translateY * this.zoom || 0;
     this.gradientBackground = options.gradientBackground || null;
     this.background = options.background || '#ffffff';
-    this.finishDraw = options.finish || function finish(params) {};
-    this.errorHandler = options.error || function error(params) {};
-    this.progress = options.progress || function progress(params) {};
+    this.finishDraw = options.finish || noop;
+    this.errorHandler = options.error || noop;
+    this.progress = options.progress || noop;
     this.textAlign = options.textAlign || 'left';
     this.fullText = options.fullText || false;
     this.font = options.font || '14px PingFang SC';
@@ -78,7 +65,7 @@ class Wxml2Canvas {
     this.distance = 0;
     this.progress(0);
 
-    this.ctx = wx.createCanvasContext(this.element, this.obj);
+    this.ctx = Taro.createCanvasContext(this.element, this.obj);
     this.ctx.font = this.font;
     this.ctx.setTextBaseline('top');
     this.ctx.setStrokeStyle('white');
@@ -195,7 +182,7 @@ class Wxml2Canvas {
           obj.destHeight = self.destHeight;
         }
 
-        wx.canvasToTempFilePath(obj, self.obj);
+        Taro.canvasToTempFilePath(obj, self.obj);
       },
       self.device.system.indexOf('iOS') === -1 ? 300 : 100
     );
@@ -221,7 +208,7 @@ class Wxml2Canvas {
             /^http:\/\/127\.0\.0\.1/.test(item.url)
           ) {
             if (item.isBase64) {
-              let fileManager = wx.getFileSystemManager();
+              let fileManager = Taro.getFileSystemManager();
 
               fileManager.writeFile({
                 filePath: item.url,
@@ -239,7 +226,7 @@ class Wxml2Canvas {
             }
 
             function imageInfo(url) {
-              wx.getImageInfo({
+              Taro.getImageInfo({
                 src: url,
                 success(res) {
                   let index = self._findPicIndex(url);
@@ -256,10 +243,10 @@ class Wxml2Canvas {
               });
             }
           } else {
-            wx.downloadFile({
+            Taro.downloadFile({
               url: item.url.replace(/^https?/, 'https'),
               success: function(res) {
-                wx.getImageInfo({
+                Taro.getImageInfo({
                   src: res.tempFilePath,
                   success(img) {
                     let index = self._findPicIndex(item.url);
@@ -341,7 +328,7 @@ class Wxml2Canvas {
         height = height * zoom;
       }
 
-      if (style.dataset && style.dataset.mode && imageMode.indexOf(style.dataset.mode) > -1) {
+      if (style.dataset && style.dataset.mode && IMAGE_MODE.indexOf(style.dataset.mode) > -1) {
         mode = {
           type: style.dataset.mode,
           width: imgWidth,
@@ -524,7 +511,7 @@ class Wxml2Canvas {
       let y = 0;
 
       if (typeof style.padding === 'string') {
-        style.padding = Util.transferPadding(style.padding);
+        style.padding = transferPadding(style.padding);
       }
       item.x = this._resetPositionX(item, style);
       item.y = this._resetPositionY(item, style, textHeight);
@@ -778,42 +765,6 @@ class Wxml2Canvas {
     this.ctx.setLineWidth((style.width || 1) * this.zoom);
     this.ctx.lineTo(x2, y2);
     this.ctx.stroke();
-    this.ctx.draw(true);
-    this.ctx.restore();
-  }
-
-  // 废弃，合并到_drawRect
-  _drawImage(item, style, resolve, reject, isWxml) {
-    let zoom = this.zoom;
-    try {
-      item.x = this._resetPositionX(item, style);
-      item.y = this._resetPositionY(item, style);
-      item.x = item.x + (style.padding[3] || 0);
-      item.y = item.y + (style.padding[0] || 0);
-
-      let index = this._findPicIndex(item.url);
-      let url = index > -1 ? this.allPic[index].local : item.url;
-      this._drawImageToCanvas(url, item.x, item.y, style.width * zoom, style.height * zoom, style);
-
-      this._updateProgress(item.progress);
-      resolve && resolve();
-    } catch (e) {
-      reject && reject({ errcode: 1012, errmsg: 'drawRect error', e });
-    }
-  }
-
-  // 废弃，合并到_drawRect
-  _drawImageToCanvas(url, x, y, width, height, style) {
-    let { fill, border, boxShadow } = style;
-    this.ctx.save();
-
-    this._drawBoxShadow(boxShadow);
-    this.ctx.drawImage(url, x, y, width, height);
-
-    this._drawBorder(border, style, border => {
-      let fixBorder = border.width;
-      this.ctx.strokeRect(x - fixBorder / 2, y - fixBorder / 2, width + fixBorder, height + fixBorder);
-    });
     this.ctx.draw(true);
     this.ctx.restore();
   }
@@ -1072,15 +1023,10 @@ class Wxml2Canvas {
   }
 
   _getWxml(item, style) {
-    let self = this;
-    let query;
-    if (this.obj) {
-      query = wx.createSelectorQuery().in(this.obj);
-    } else {
-      query = wx.createSelectorQuery();
-    }
+    const query = this.obj ? Taro.createSelectorQuery().in(this.obj) : Taro.createSelectorQuery();
+    const self = this;
 
-    let p1 = new Promise((resolve, reject) => {
+    const p1 = new Promise((resolve, reject) => {
       // 会触发两次，要限制
       let count = 0;
       query
@@ -1138,7 +1084,7 @@ class Wxml2Canvas {
         .exec();
     });
 
-    let p2 = new Promise((resolve, reject) => {
+    const p2 = new Promise((resolve, reject) => {
       if (!item.limit) {
         resolve({ top: 0, width: self.width / self.zoom });
       }
@@ -1178,11 +1124,12 @@ class Wxml2Canvas {
   }
 
   _formatImage(res = []) {
-    let list = [];
+    const list = [];
+
     res.forEach((item, index) => {
       let dataset = item.dataset;
-      let uid = Util.getUid();
-      let filename = `${wx.env.USER_DATA_PATH}/${uid}.png`;
+      let uid = getUid();
+      let filename = `${Taro.env.USER_DATA_PATH}/${uid}.png`;
       if ((dataset.type === 'image' || dataset.type === 'radius-image') && dataset.url) {
         let sub = {
           url: dataset.base64 ? filename : dataset.url,
@@ -1250,7 +1197,7 @@ class Wxml2Canvas {
 
     let padding = sub.dataset.padding || '0 0 0 0';
     if (typeof padding === 'string') {
-      padding = Util.transferPadding(padding);
+      padding = transferPadding(padding);
     }
     let paddingTop = Number(sub.paddingTop.replace('px', '')) + Number(padding[0]);
     let paddingRight = Number(sub.paddingRight.replace('px', '')) + Number(padding[1]);
@@ -1391,7 +1338,7 @@ class Wxml2Canvas {
     if (style.dataset && style.dataset.type) {
       zoom = 1;
     }
-    border = Util.transferBorder(border);
+    border = transferBorder(border);
 
     if (border && border.width) {
       // 空白阴影，清空掉边框的阴影
@@ -1412,7 +1359,7 @@ class Wxml2Canvas {
   }
 
   _drawBoxShadow(boxShadow, callback) {
-    boxShadow = Util.transferBoxShadow(boxShadow);
+    boxShadow = transferBoxShadow(boxShadow);
     if (boxShadow) {
       this.ctx.setShadow(boxShadow.offsetX, boxShadow.offsetY, boxShadow.blur, boxShadow.color);
     } else {
@@ -1455,5 +1402,3 @@ class Wxml2Canvas {
     }
   }
 }
-
-export default Wxml2Canvas;

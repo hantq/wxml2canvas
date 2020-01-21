@@ -1,17 +1,22 @@
 {
-  "name": "wxml2canvas2",
-  "version": "1.0.0",
-  "description": "将 wxml 指定节点转换成 canvas 元素",
+  "name": "taro2canvas",
+  "version": "1.0.0-alpha.0",
+  "description": "将 Taro 指定节点转换成 canvas 元素",
   "main": "index.js",
   "scripts": {
     "prettier": "npx prettier --config .prettierrc.js --write \"**/*.js\""
   },
   "keywords": [
-    "wxml2canvas",
-    "wxml",
+    "taro2canvas",
+    "Taro",
+    "WXML",
     "canvas"
   ],
+  "peerDependencies": {
+    "@tarojs/taro": "2.0.1"
+  },
   "devDependencies": {
+    "@tarojs/taro": "2.0.1",
     "prettier": "1.19.1"
   },
   "license": "ISC"
