@@ -1,6 +1,6 @@
 {
   "name": "taro2canvas",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "description": "将 Taro 指定节点转换成 canvas 元素",
   "main": "index.js",
   "scripts": {
