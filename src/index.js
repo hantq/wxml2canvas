@@ -10,11 +10,11 @@ export default class Taro2Canvas {
 
     this.element = options.element;
     this.obj = options.obj;
-    this.width = options.width * this.zoom || 0;
-    this.height = options.height * this.zoom || 0;
+    this.width = Math.floor(options.width * this.zoom) || 0;
+    this.height = Math.floor(options.height * this.zoom) || 0;
     this.destZoom = options.destZoom || 3;
-    this.destWidth = this.width * this.destZoom;
-    this.destHeight = this.height * this.destZoom;
+    this.destWidth = Math.floor(this.width * this.destZoom) || 0;
+    this.destHeight = Math.floor(this.height * this.destZoom) || 0;
     this.translateX = options.translateX * this.zoom || 0;
     this.translateY = options.translateY * this.zoom || 0;
     this.gradientBackground = options.gradientBackground || null;
